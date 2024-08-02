@@ -16,7 +16,7 @@ const permutation = [
 	50, 45, 127, 4, 150, 254, 138, 236, 205, 93, 222, 114, 67, 29, 24, 72, 243,
 	141, 128, 195, 78, 66, 215, 61, 156, 180
 ];
-const p = permutation.concat(permutation);
+const p = new Uint8Array(permutation.concat(permutation));
 
 /**
  * https://asserttrue.blogspot.com/2011/12/perlin-noise-in-javascript_31.html
