@@ -34,7 +34,7 @@ export class Game {
 	}
 
 	start() {
-		this.requestId = requestAnimationFrame((ts) => this.update(ts));
+		this.requestId = requestAnimationFrame(ts => this.update(ts));
 	}
 
 	physics(dt: number) {
@@ -58,9 +58,15 @@ export class Game {
 			this.player.wx = newX;
 		} else {
 			if (this.player.vx > 0) {
-				this.player.wx = Math.floor(newX + this.player.width / 2) - this.player.width / 2 - EPSILON;
+				this.player.wx =
+					Math.floor(newX + this.player.width / 2) -
+					this.player.width / 2 -
+					EPSILON;
 			} else {
-				this.player.wx = Math.ceil(newX - this.player.width / 2) + this.player.width / 2 + EPSILON;
+				this.player.wx =
+					Math.ceil(newX - this.player.width / 2) +
+					this.player.width / 2 +
+					EPSILON;
 			}
 			this.player.vx = 0;
 		}
@@ -71,10 +77,14 @@ export class Game {
 		} else {
 			if (this.player.vy < 0) {
 				this.player.wy =
-					Math.ceil(newY - this.player.height / 2) + this.player.height / 2 + EPSILON;
+					Math.ceil(newY - this.player.height / 2) +
+					this.player.height / 2 +
+					EPSILON;
 			} else {
 				this.player.wy =
-					Math.floor(newY + this.player.height / 2) - this.player.height / 2 - EPSILON;
+					Math.floor(newY + this.player.height / 2) -
+					this.player.height / 2 -
+					EPSILON;
 			}
 			this.player.vy = 0;
 		}
@@ -105,7 +115,10 @@ export class Game {
 	}
 
 	isOnGround(): boolean {
-		return this.checkCollision(this.player.wx, this.player.wy - EPSILON * 2);
+		return this.checkCollision(
+			this.player.wx,
+			this.player.wy - EPSILON * 2
+		);
 	}
 
 	render() {
@@ -131,17 +144,26 @@ export class Game {
 					break;
 			}
 
-			this.ctx.fillRect(x - this.camera.x, y - this.camera.y, this.TILE_SIZE, this.TILE_SIZE);
+			this.ctx.fillRect(
+				x - this.camera.x,
+				y - this.camera.y,
+				this.TILE_SIZE,
+				this.TILE_SIZE
+			);
 		}
 
 		this.ctx.fillStyle = 'blue';
 
 		const x = this.player.wx * this.TILE_SIZE;
-		const y = this.height - this.player.wy * this.TILE_SIZE - this.TILE_SIZE;
+		const y =
+			this.height - this.player.wy * this.TILE_SIZE - this.TILE_SIZE;
 
 		this.ctx.fillRect(
 			x - this.camera.x - (this.player.width * this.TILE_SIZE) / 2,
-			y - this.camera.y - (this.player.height * this.TILE_SIZE) / 2 + this.TILE_SIZE,
+			y -
+				this.camera.y -
+				(this.player.height * this.TILE_SIZE) / 2 +
+				this.TILE_SIZE,
 			this.player.width * this.TILE_SIZE,
 			this.player.height * this.TILE_SIZE
 		);
@@ -150,7 +172,7 @@ export class Game {
 	update(ts: number) {
 		if (!this.prevTime) {
 			this.prevTime = ts;
-			this.requestId = requestAnimationFrame((ts) => this.update(ts));
+			this.requestId = requestAnimationFrame(ts => this.update(ts));
 			return;
 		}
 		const dt = (ts - this.prevTime) / 1000;
@@ -165,7 +187,7 @@ export class Game {
 		this.camera.update(dt);
 		this.render();
 
-		this.requestId = requestAnimationFrame((ts) => this.update(ts));
+		this.requestId = requestAnimationFrame(ts => this.update(ts));
 	}
 
 	place(x: number, y: number, tile: Tile) {

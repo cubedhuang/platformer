@@ -46,8 +46,10 @@ export class Camera {
 	update(dt: number) {
 		// https://lisyarus.github.io/blog/posts/exponential-smoothing.html
 
-		this.current.x += (this.target.x - this.current.x) * (1 - Math.exp(-this.SPEED * dt));
-		this.current.y += (this.target.y - this.current.y) * (1 - Math.exp(-this.SPEED * dt));
+		this.current.x +=
+			(this.target.x - this.current.x) * (1 - Math.exp(-this.SPEED * dt));
+		this.current.y +=
+			(this.target.y - this.current.y) * (1 - Math.exp(-this.SPEED * dt));
 	}
 
 	contains(x: number, y: number, width = 0, height = width) {
