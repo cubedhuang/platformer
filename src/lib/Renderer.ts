@@ -1,5 +1,3 @@
-import { debounce } from '$lib';
-
 import type { Game } from './Game';
 import { noise, noises } from './noise';
 import { Tile } from './Tile';
@@ -51,7 +49,13 @@ export class Renderer {
 		this.cache.clear();
 	}
 
-	lazyInvalidate = debounce(() => this.invalidate(), 500);
+	invalidateNear(wx: number, wy: number) {
+		for (let dx = -1; dx <= 1; dx++) {
+			for (let dy = -1; dy <= 1; dy++) {
+				this.cache.delete(`${wx + dx},${wy + dy}`);
+			}
+		}
+	}
 
 	render() {
 		const game = this.game;
@@ -88,7 +92,7 @@ export class Renderer {
 					game.TILE_SIZE -
 					tileOffsetY;
 
-				const key = `${wx},${wy},${tile}`;
+				const key = `${wx},${wy}`;
 
 				let ocanvas = this.cache.get(key);
 

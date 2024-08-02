@@ -163,7 +163,7 @@ export class Game {
 		if (this.world.at(worldX, worldY) === tile) return;
 
 		this.world.set(worldX, worldY, tile);
-		this.renderer.lazyInvalidate();
+		this.renderer.invalidateNear(worldX, worldY);
 
 		console.log(this.world.toString());
 	}
