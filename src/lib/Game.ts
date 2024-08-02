@@ -8,6 +8,7 @@ const EPSILON = 0.01;
 export class Game {
 	private readonly TILE_SIZE = 21;
 	private readonly SUBTILES = 3;
+	private TILE_OVERLAP = 0.25;
 
 	private requestId: number | null = null;
 	private prevTime = 0;
@@ -28,6 +29,7 @@ export class Game {
 
 	resize() {
 		const ratio = window.devicePixelRatio;
+		this.TILE_OVERLAP = 0.25 / ratio;
 		this.canvas.width = this.width * ratio;
 		this.canvas.height = this.height * ratio;
 		this.canvas.style.width = `${this.width}px`;
@@ -212,7 +214,7 @@ export class Game {
 								}% 0.038 31.82)`;
 							}
 
-							this.ctx.fillRect(
+							this.rect(
 								xx - this.camera.x,
 								yy - this.camera.y,
 								this.TILE_SIZE / this.SUBTILES,
@@ -240,7 +242,7 @@ export class Game {
 
 							this.ctx.fillStyle = `hsl(0 100% ${30 + value * 10}%)`;
 
-							this.ctx.fillRect(
+							this.rect(
 								xx - this.camera.x,
 								yy - this.camera.y,
 								this.TILE_SIZE / this.SUBTILES,
@@ -267,6 +269,15 @@ export class Game {
 				this.TILE_SIZE,
 			this.player.width * this.TILE_SIZE,
 			this.player.height * this.TILE_SIZE
+		);
+	}
+
+	rect(x: number, y: number, width: number, height: number) {
+		this.ctx.fillRect(
+			x - this.TILE_OVERLAP,
+			y - this.TILE_OVERLAP,
+			width + this.TILE_OVERLAP * 2,
+			height + this.TILE_OVERLAP * 2
 		);
 	}
 
