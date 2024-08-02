@@ -183,7 +183,7 @@ export class Renderer {
 				const y = (suby * game.TILE_SIZE) / this.SUBTILES;
 
 				const value = noises(
-					[1, 0.5],
+					[2, 0.3],
 					wx + subx / this.SUBTILES,
 					wy - suby / this.SUBTILES
 				);
