@@ -11,7 +11,9 @@
 	let selectedTile = Tile.Earth;
 
 	onMount(() => {
-		const ctx = canvas.getContext('2d');
+		const ctx = canvas.getContext('2d', {
+			desynchronized: true
+		});
 
 		if (!ctx) {
 			throw new Error('2d context not supported');
