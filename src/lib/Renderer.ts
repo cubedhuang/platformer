@@ -1,7 +1,7 @@
 import { debounce } from '$lib';
 
 import type { Game } from './Game';
-import { noise } from './noise';
+import { noise, noises } from './noise';
 import { Tile } from './Tile';
 
 export class Renderer {
@@ -11,7 +11,18 @@ export class Renderer {
 
 	private cache = new Map<string, OffscreenCanvas>();
 
+	private foreground: OffscreenCanvas;
+	private fctx: OffscreenCanvasRenderingContext2D;
+
 	constructor(private game: Game) {
+		this.foreground = new OffscreenCanvas(
+			(game.width + game.TILE_SIZE) * this.PIXEL_RATIO,
+			(game.height + game.TILE_SIZE) * this.PIXEL_RATIO
+		);
+		this.fctx = this.foreground.getContext('2d', {
+			desynchronized: true
+		})!;
+
 		this.resize();
 	}
 
@@ -29,6 +40,10 @@ export class Renderer {
 		game.canvas.style.height = `${game.height}px`;
 		game.ctx.scale(ratio, ratio);
 
+		this.foreground.width = (game.width + game.TILE_SIZE) * ratio;
+		this.foreground.height = (game.height + game.TILE_SIZE) * ratio;
+		this.fctx.scale(ratio, ratio);
+
 		this.cache.clear();
 	}
 
@@ -41,24 +56,37 @@ export class Renderer {
 	render() {
 		const game = this.game;
 
-		game.ctx.clearRect(0, 0, game.width, game.height);
+		game.ctx.fillStyle = 'hsl(205 80% 40%)';
+		game.ctx.fillRect(0, 0, game.width, game.height);
+
+		this.fctx.clearRect(
+			0,
+			0,
+			this.foreground.width,
+			this.foreground.height
+		);
 
 		const startX = Math.floor(game.camera.x / game.TILE_SIZE);
 		const startY = Math.floor(-game.camera.y / game.TILE_SIZE);
 		const endX = Math.ceil((game.camera.x + game.width) / game.TILE_SIZE);
 		const endY = Math.ceil((game.height - game.camera.y) / game.TILE_SIZE);
 
+		const tileOffsetX =
+			Math.floor(game.camera.x / game.TILE_SIZE) * game.TILE_SIZE;
+		const tileOffsetY =
+			Math.floor(game.camera.y / game.TILE_SIZE) * game.TILE_SIZE;
+
 		for (let wx = startX; wx < endX; wx++) {
 			for (let wy = startY; wy < endY; wy++) {
 				const tile = game.world.at(wx, wy);
 				if (tile === Tile.Empty) continue;
 
-				const x = wx * game.TILE_SIZE - game.camera.x;
+				const x = wx * game.TILE_SIZE - tileOffsetX;
 				const y =
 					game.height -
 					wy * game.TILE_SIZE -
 					game.TILE_SIZE -
-					game.camera.y;
+					tileOffsetY;
 
 				const key = `${wx},${wy},${tile}`;
 
@@ -69,9 +97,23 @@ export class Renderer {
 					this.cache.set(key, ocanvas);
 				}
 
-				game.ctx.drawImage(ocanvas, x, y);
+				this.fctx.drawImage(
+					ocanvas,
+					x,
+					y,
+					game.TILE_SIZE,
+					game.TILE_SIZE
+				);
 			}
 		}
+
+		game.ctx.drawImage(
+			this.foreground,
+			tileOffsetX - game.camera.x,
+			tileOffsetY - game.camera.y,
+			this.foreground.width / this.PIXEL_RATIO,
+			this.foreground.height / this.PIXEL_RATIO
+		);
 
 		game.ctx.fillStyle = 'blue';
 
@@ -98,6 +140,7 @@ export class Renderer {
 		const octx = ocanvas.getContext('2d', {
 			desynchronized: true
 		})!;
+		octx.scale(this.PIXEL_RATIO, this.PIXEL_RATIO);
 
 		switch (tile) {
 			case Tile.Earth:
@@ -139,9 +182,10 @@ export class Renderer {
 				const x = (subx * game.TILE_SIZE) / this.SUBTILES;
 				const y = (suby * game.TILE_SIZE) / this.SUBTILES;
 
-				const value = noise(
-					(wx + subx / this.SUBTILES) * 2,
-					(wy - suby / this.SUBTILES) * 2
+				const value = noises(
+					[1, 0.5],
+					wx + subx / this.SUBTILES,
+					wy - suby / this.SUBTILES
 				);
 
 				if (
@@ -174,7 +218,7 @@ export class Renderer {
 
 				if (isGreen) {
 					octx.fillStyle = `oklch(${
-						60 + (value - 0.5) * 10
+						55 + (value - 0.5) * 10
 					}% 0.2467 145.39)`;
 				} else {
 					octx.fillStyle = `oklch(${

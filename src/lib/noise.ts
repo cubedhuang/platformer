@@ -18,6 +18,15 @@ const permutation = [
 ];
 const p = new Uint8Array(permutation.concat(permutation));
 
+export function noises(scales: number[], x: number, y = 0, z = 0) {
+	return (
+		scales.reduce(
+			(acc, scale) => acc + noise(x / scale, y / scale, z / scale),
+			0
+		) / scales.length
+	);
+}
+
 /**
  * https://asserttrue.blogspot.com/2011/12/perlin-noise-in-javascript_31.html
  * @returns A value between 0 and 1
