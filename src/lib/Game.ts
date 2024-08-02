@@ -72,7 +72,6 @@ export class Game {
 			if (this.player.vy < 0) {
 				this.player.wy =
 					Math.ceil(newY - this.player.height / 2) + this.player.height / 2 + EPSILON;
-				console.log(this.checkCollision(this.player.wx, this.player.wy));
 			} else {
 				this.player.wy =
 					Math.floor(newY + this.player.height / 2) - this.player.height / 2 - EPSILON;
@@ -93,8 +92,6 @@ export class Game {
 		const right = Math.ceil(x + this.player.width / 2);
 		const bottom = Math.floor(y - this.player.height / 2);
 		const top = Math.ceil(y + this.player.height / 2);
-
-		console.log(x, y, bottom, top);
 
 		for (let wx = left; wx < right; wx++) {
 			for (let wy = bottom; wy < top; wy++) {
@@ -161,19 +158,10 @@ export class Game {
 
 		this.physics(dt);
 
-		if (this.keys.has('w')) {
-			this.camera.shift(0, -this.TILE_SIZE * 5 * dt);
-		}
-		if (this.keys.has('s')) {
-			this.camera.shift(0, this.TILE_SIZE * 5 * dt);
-		}
-		if (this.keys.has('a')) {
-			this.camera.shift(-this.TILE_SIZE * 5 * dt, 0);
-		}
-		if (this.keys.has('d')) {
-			this.camera.shift(this.TILE_SIZE * 5 * dt, 0);
-		}
-
+		this.camera.follow({
+			x: this.player.wx * this.TILE_SIZE,
+			y: -this.player.wy * this.TILE_SIZE + this.height
+		});
 		this.camera.update(dt);
 		this.render();
 

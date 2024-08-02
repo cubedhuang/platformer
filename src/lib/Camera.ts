@@ -14,8 +14,28 @@ export class Camera {
 		this.target = { x, y };
 	}
 
-	follow(target: { x: number; y: number }) {
-		this.target = target;
+	follow(center: { x: number; y: number }) {
+		const dx = center.x - (this.target.x + this.width / 2);
+		const dy = center.y - (this.target.y + this.height / 2);
+
+		const MAX_D_LEFT = this.width / 6;
+		const MAX_D_RIGHT = 0;
+		const MAX_D_UP = -this.height / 6;
+		const MAX_D_DOWN = this.height / 3;
+
+		if (dx < -MAX_D_LEFT) {
+			this.target.x += dx + MAX_D_LEFT;
+			this.target.x = Math.max(this.target.x, 0);
+		} else if (dx > MAX_D_RIGHT) {
+			this.target.x += dx - MAX_D_RIGHT;
+		}
+
+		if (dy < -MAX_D_UP) {
+			this.target.y += dy + MAX_D_UP;
+		} else if (dy > MAX_D_DOWN) {
+			this.target.y += dy - MAX_D_DOWN;
+			this.target.y = Math.min(this.target.y, 0);
+		}
 	}
 
 	shift(dx: number, dy: number) {
