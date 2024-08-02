@@ -1,4 +1,5 @@
 import { Camera } from './Camera';
+import { noise } from './noise';
 import { Tile } from './Tile';
 import { World } from './World';
 
@@ -12,7 +13,7 @@ export class Game {
 
 	world = new World();
 	camera = new Camera(0, 0, 800, 600);
-	player = { wx: 3, wy: 10, vx: 0, vy: 0, width: 1.8, height: 3.6 };
+	player = { wx: 3, wy: 10, vx: 0, vy: 0, width: 0.9, height: 1.8 };
 	keys = new Set<string>();
 
 	constructor(
@@ -71,7 +72,6 @@ export class Game {
 			this.player.vx = 0;
 		}
 
-		// Check vertical collision
 		if (!this.checkCollision(this.player.wx, newY)) {
 			this.player.wy = newY;
 		} else {
@@ -89,7 +89,6 @@ export class Game {
 			this.player.vy = 0;
 		}
 
-		// Apply friction
 		this.player.vx *= 0.9 ** (dt * 120);
 		this.player.vy *= 0.9 ** (dt * 30);
 	}
@@ -134,22 +133,107 @@ export class Game {
 
 			switch (tile) {
 				case Tile.Empty:
-					this.ctx.fillStyle = 'black';
+					continue;
+				case Tile.Earth: {
+					const SUBTILE_SIZE = this.TILE_SIZE / 4;
+
+					for (
+						let subx = 0;
+						subx < this.TILE_SIZE / SUBTILE_SIZE;
+						subx++
+					) {
+						for (
+							let suby = 0;
+							suby < this.TILE_SIZE / SUBTILE_SIZE;
+							suby++
+						) {
+							const xx = x + subx * SUBTILE_SIZE;
+							const yy = y + suby * SUBTILE_SIZE;
+
+							const value = noise(xx / 3, yy / 3);
+
+							const topLeftCorner =
+								this.world.at(wx - 1, wy + 1) === Tile.Empty &&
+								this.world.at(wx - 1, wy) === Tile.Empty &&
+								this.world.at(wx, wy + 1) === Tile.Empty;
+							const topRightCorner =
+								this.world.at(wx + 1, wy + 1) === Tile.Empty &&
+								this.world.at(wx + 1, wy) === Tile.Empty &&
+								this.world.at(wx, wy + 1) === Tile.Empty;
+							if (
+								(topLeftCorner && subx === 0 && suby === 0) ||
+								(topRightCorner && subx === 3 && suby === 0)
+							) {
+								continue;
+							}
+
+							const top =
+								this.world.at(wx, wy + 1) === Tile.Empty;
+							const left =
+								this.world.at(wx - 1, wy) === Tile.Empty;
+							const right =
+								this.world.at(wx + 1, wy) === Tile.Empty;
+							const topLeftInside =
+								!top &&
+								!left &&
+								this.world.at(wx - 1, wy + 1) === Tile.Empty;
+							const topRightInside =
+								!top &&
+								!right &&
+								this.world.at(wx + 1, wy + 1) === Tile.Empty;
+							const isGreen =
+								(top &&
+									(suby === 0 || value > suby / 4 + 0.1)) ||
+								(left &&
+									(subx === 0 || value > subx / 4 + 0.3)) ||
+								(right &&
+									(subx === 3 ||
+										value > (3 - subx) / 4 + 0.3)) ||
+								// (topLeftInside && subx === 0 && suby === 0) ||
+								// (topRightInside && subx === 3 && suby === 0);
+								(topLeftInside &&
+									((subx === 0 && suby === 0) ||
+										(((subx === 1 && suby === 0) ||
+											(subx === 0 && suby === 1)) &&
+											value < 0.5))) ||
+								(topRightInside &&
+									((subx === 3 && suby === 0) ||
+										(((subx === 2 && suby === 0) ||
+											(subx === 3 && suby === 1)) &&
+											value < 0.5)));
+
+							if (isGreen) {
+								this.ctx.fillStyle = `oklch(${
+									60 + (value - 0.5) * 10
+								}% 0.2467 145.39)`;
+							} else {
+								this.ctx.fillStyle = `oklch(${
+									30.15 + (value - 0.5) * 10
+								}% 0.038 31.82)`;
+							}
+
+							this.ctx.fillRect(
+								xx - this.camera.x,
+								yy - this.camera.y,
+								SUBTILE_SIZE,
+								SUBTILE_SIZE
+							);
+						}
+					}
+
 					break;
-				case Tile.Earth:
-					this.ctx.fillStyle = 'brown';
-					break;
+				}
 				case Tile.Lava:
 					this.ctx.fillStyle = 'red';
 					break;
 			}
 
-			this.ctx.fillRect(
-				x - this.camera.x,
-				y - this.camera.y,
-				this.TILE_SIZE,
-				this.TILE_SIZE
-			);
+			// this.ctx.fillRect(
+			// 	x - this.camera.x,
+			// 	y - this.camera.y,
+			// 	this.TILE_SIZE,
+			// 	this.TILE_SIZE
+			// );
 		}
 
 		this.ctx.fillStyle = 'blue';
@@ -175,7 +259,7 @@ export class Game {
 			this.requestId = requestAnimationFrame(ts => this.update(ts));
 			return;
 		}
-		const dt = (ts - this.prevTime) / 1000;
+		const dt = Math.min((ts - this.prevTime) / 1000, 1 / 30);
 		this.prevTime = ts;
 
 		this.physics(dt);
