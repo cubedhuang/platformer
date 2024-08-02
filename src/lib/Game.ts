@@ -6,7 +6,8 @@ import { World } from './World';
 const EPSILON = 0.01;
 
 export class Game {
-	private readonly TILE_SIZE = 20;
+	private readonly TILE_SIZE = 21;
+	private readonly SUBTILES = 3;
 
 	private requestId: number | null = null;
 	private prevTime = 0;
@@ -134,73 +135,72 @@ export class Game {
 			switch (tile) {
 				case Tile.Empty:
 					continue;
-				case Tile.Earth: {
-					const SUBTILE_SIZE = this.TILE_SIZE / 4;
 
-					for (
-						let subx = 0;
-						subx < this.TILE_SIZE / SUBTILE_SIZE;
-						subx++
-					) {
-						for (
-							let suby = 0;
-							suby < this.TILE_SIZE / SUBTILE_SIZE;
-							suby++
-						) {
-							const xx = x + subx * SUBTILE_SIZE;
-							const yy = y + suby * SUBTILE_SIZE;
+				case Tile.Earth: {
+					const topLeftCorner =
+						this.world.at(wx - 1, wy + 1) === Tile.Empty &&
+						this.world.at(wx - 1, wy) === Tile.Empty &&
+						this.world.at(wx, wy + 1) === Tile.Empty;
+					const topRightCorner =
+						this.world.at(wx + 1, wy + 1) === Tile.Empty &&
+						this.world.at(wx + 1, wy) === Tile.Empty &&
+						this.world.at(wx, wy + 1) === Tile.Empty;
+					const top = this.world.at(wx, wy + 1) === Tile.Empty;
+					const left = this.world.at(wx - 1, wy) === Tile.Empty;
+					const right = this.world.at(wx + 1, wy) === Tile.Empty;
+					const topLeftInside =
+						!top &&
+						!left &&
+						this.world.at(wx - 1, wy + 1) === Tile.Empty;
+					const topRightInside =
+						!top &&
+						!right &&
+						this.world.at(wx + 1, wy + 1) === Tile.Empty;
+
+					for (let subx = 0; subx < this.SUBTILES; subx++) {
+						for (let suby = 0; suby < this.SUBTILES; suby++) {
+							const xx =
+								x + (subx * this.TILE_SIZE) / this.SUBTILES;
+							const yy =
+								y + (suby * this.TILE_SIZE) / this.SUBTILES;
 
 							const value = noise(xx / 3, yy / 3);
 
-							const topLeftCorner =
-								this.world.at(wx - 1, wy + 1) === Tile.Empty &&
-								this.world.at(wx - 1, wy) === Tile.Empty &&
-								this.world.at(wx, wy + 1) === Tile.Empty;
-							const topRightCorner =
-								this.world.at(wx + 1, wy + 1) === Tile.Empty &&
-								this.world.at(wx + 1, wy) === Tile.Empty &&
-								this.world.at(wx, wy + 1) === Tile.Empty;
 							if (
 								(topLeftCorner && subx === 0 && suby === 0) ||
-								(topRightCorner && subx === 3 && suby === 0)
+								(topRightCorner &&
+									subx === this.SUBTILES - 1 &&
+									suby === 0)
 							) {
 								continue;
 							}
 
-							const top =
-								this.world.at(wx, wy + 1) === Tile.Empty;
-							const left =
-								this.world.at(wx - 1, wy) === Tile.Empty;
-							const right =
-								this.world.at(wx + 1, wy) === Tile.Empty;
-							const topLeftInside =
-								!top &&
-								!left &&
-								this.world.at(wx - 1, wy + 1) === Tile.Empty;
-							const topRightInside =
-								!top &&
-								!right &&
-								this.world.at(wx + 1, wy + 1) === Tile.Empty;
 							const isGreen =
 								(top &&
-									(suby === 0 || value > suby / 4 + 0.1)) ||
+									(suby === 0 ||
+										value > suby / this.SUBTILES + 0.1)) ||
 								(left &&
-									(subx === 0 || value > subx / 4 + 0.3)) ||
+									(subx === 0 ||
+										value > subx / this.SUBTILES + 0.3)) ||
 								(right &&
-									(subx === 3 ||
-										value > (3 - subx) / 4 + 0.3)) ||
-								// (topLeftInside && subx === 0 && suby === 0) ||
-								// (topRightInside && subx === 3 && suby === 0);
+									(subx === this.SUBTILES - 1 ||
+										value >
+											(this.SUBTILES - 1 - subx) /
+												this.SUBTILES +
+												0.3)) ||
 								(topLeftInside &&
 									((subx === 0 && suby === 0) ||
 										(((subx === 1 && suby === 0) ||
 											(subx === 0 && suby === 1)) &&
-											value < 0.5))) ||
+											value > 0.7))) ||
 								(topRightInside &&
-									((subx === 3 && suby === 0) ||
-										(((subx === 2 && suby === 0) ||
-											(subx === 3 && suby === 1)) &&
-											value < 0.5)));
+									((subx === this.SUBTILES - 1 &&
+										suby === 0) ||
+										(((subx === this.SUBTILES - 2 &&
+											suby === 0) ||
+											(subx === this.SUBTILES - 1 &&
+												suby === 1)) &&
+											value > 0.7)));
 
 							if (isGreen) {
 								this.ctx.fillStyle = `oklch(${
@@ -215,25 +215,42 @@ export class Game {
 							this.ctx.fillRect(
 								xx - this.camera.x,
 								yy - this.camera.y,
-								SUBTILE_SIZE,
-								SUBTILE_SIZE
+								this.TILE_SIZE / this.SUBTILES,
+								this.TILE_SIZE / this.SUBTILES
 							);
 						}
 					}
-
 					break;
 				}
-				case Tile.Lava:
-					this.ctx.fillStyle = 'red';
-					break;
-			}
 
-			// this.ctx.fillRect(
-			// 	x - this.camera.x,
-			// 	y - this.camera.y,
-			// 	this.TILE_SIZE,
-			// 	this.TILE_SIZE
-			// );
+				case Tile.Lava: {
+					const top = this.world.at(wx, wy + 1) === Tile.Empty;
+					for (let subx = 0; subx < this.SUBTILES; subx++) {
+						for (
+							let suby = top ? 1 : 0;
+							suby < this.SUBTILES;
+							suby++
+						) {
+							const xx =
+								x + (subx * this.TILE_SIZE) / this.SUBTILES;
+							const yy =
+								y + (suby * this.TILE_SIZE) / this.SUBTILES;
+
+							const value = noise(xx / 3, yy / 3);
+
+							this.ctx.fillStyle = `hsl(0 100% ${30 + value * 10}%)`;
+
+							this.ctx.fillRect(
+								xx - this.camera.x,
+								yy - this.camera.y,
+								this.TILE_SIZE / this.SUBTILES,
+								this.TILE_SIZE / this.SUBTILES
+							);
+						}
+					}
+					break;
+				}
+			}
 		}
 
 		this.ctx.fillStyle = 'blue';
