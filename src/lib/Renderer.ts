@@ -10,20 +10,10 @@ export class Renderer {
 	private TILE_OVERLAP = 0.25;
 	private PIXEL_RATIO = 1;
 
-	private ocanvas: OffscreenCanvas;
-	private octx: OffscreenCanvasRenderingContext2D;
-
-	private cache = new Map<string, ImageData>();
+	private cache = new Map<string, OffscreenCanvas>();
 
 	constructor(private game: Game) {
-		this.ocanvas = new OffscreenCanvas(game.width, game.height);
-		const octx = this.ocanvas.getContext('2d');
-
-		if (!octx) {
-			throw new Error('Could not get 2d context');
-		}
-
-		this.octx = octx;
+		this.resize();
 	}
 
 	resize() {
@@ -44,10 +34,6 @@ export class Renderer {
 		game.canvas.style.width = `${game.width}px`;
 		game.canvas.style.height = `${game.height}px`;
 		game.ctx.scale(ratio, ratio);
-
-		this.ocanvas.width = game.TILE_SIZE * ratio;
-		this.ocanvas.height = game.TILE_SIZE * ratio;
-		this.octx.scale(ratio, ratio);
 	}
 
 	invalidate() {
@@ -79,18 +65,15 @@ export class Renderer {
 					game.camera.y;
 
 				const key = `${wx},${wy},${tile}`;
-				let tileImage = this.cache.get(key);
 
-				if (!tileImage) {
-					tileImage = this.renderTile(tile, wx, wy);
-					this.cache.set(key, tileImage);
+				let ocanvas = this.cache.get(key);
+
+				if (!ocanvas) {
+					ocanvas = this.renderTile(tile, wx, wy);
+					this.cache.set(key, ocanvas);
 				}
 
-				game.ctx.putImageData(
-					tileImage,
-					x * this.PIXEL_RATIO,
-					y * this.PIXEL_RATIO
-				);
+				game.ctx.drawImage(ocanvas, x, y);
 			}
 		}
 
@@ -112,26 +95,31 @@ export class Renderer {
 	}
 
 	private renderTile(tile: Tile, wx: number, wy: number) {
-		this.octx.clearRect(0, 0, this.ocanvas.width, this.ocanvas.height);
+		const ocanvas = new OffscreenCanvas(
+			this.game.TILE_SIZE * this.PIXEL_RATIO,
+			this.game.TILE_SIZE * this.PIXEL_RATIO
+		);
+		const octx = ocanvas.getContext('2d', {
+			desynchronized: true
+		})!;
 
 		switch (tile) {
 			case Tile.Earth:
-				this.renderEarthTile(wx, wy);
+				this.renderEarthTile(octx, wx, wy);
 				break;
 			case Tile.Lava:
-				this.renderLavaTile(wx, wy);
+				this.renderLavaTile(octx, wx, wy);
 				break;
 		}
 
-		return this.octx.getImageData(
-			0,
-			0,
-			this.ocanvas.width,
-			this.ocanvas.height
-		);
+		return ocanvas;
 	}
 
-	private renderEarthTile(wx: number, wy: number) {
+	private renderEarthTile(
+		octx: OffscreenCanvasRenderingContext2D,
+		wx: number,
+		wy: number
+	) {
 		const game = this.game;
 
 		const topLeftCorner =
@@ -189,17 +177,17 @@ export class Renderer {
 								value > 0.8)));
 
 				if (isGreen) {
-					this.octx.fillStyle = `oklch(${
+					octx.fillStyle = `oklch(${
 						60 + (value - 0.5) * 10
 					}% 0.2467 145.39)`;
 				} else {
-					this.octx.fillStyle = `oklch(${
+					octx.fillStyle = `oklch(${
 						30.15 + (value - 0.5) * 10
 					}% 0.038 31.82)`;
 				}
 
 				this.rect(
-					this.octx,
+					octx,
 					x,
 					y,
 					game.TILE_SIZE / this.SUBTILES,
@@ -209,7 +197,11 @@ export class Renderer {
 		}
 	}
 
-	private renderLavaTile(wx: number, wy: number) {
+	private renderLavaTile(
+		octx: OffscreenCanvasRenderingContext2D,
+		wx: number,
+		wy: number
+	) {
 		const game = this.game;
 
 		const top = game.world.at(wx, wy + 1) === Tile.Empty;
@@ -224,10 +216,10 @@ export class Renderer {
 					wy - suby / this.SUBTILES
 				);
 
-				this.octx.fillStyle = `hsl(0 100% ${30 + value * 10}%)`;
+				octx.fillStyle = `hsl(0 100% ${30 + value * 10}%)`;
 
 				this.rect(
-					this.octx,
+					octx,
 					x,
 					y,
 					game.TILE_SIZE / this.SUBTILES,
