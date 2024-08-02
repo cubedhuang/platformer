@@ -20,8 +20,8 @@ export class Camera {
 
 		const MAX_D_LEFT = this.width / 6;
 		const MAX_D_RIGHT = 0;
-		const MAX_D_UP = -this.height / 6;
-		const MAX_D_DOWN = this.height / 3;
+		const MAX_D_UP = 0;
+		const MAX_D_DOWN = this.height / 4;
 
 		if (dx < -MAX_D_LEFT) {
 			this.target.x += dx + MAX_D_LEFT;

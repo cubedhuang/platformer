@@ -7,14 +7,14 @@ import { World } from './World';
 const EPSILON = 0.01;
 
 export class Game {
-	readonly TILE_SIZE = 20;
+	readonly TILE_SIZE = 32;
 
 	private requestId: number | null = null;
 	private prevTime = 0;
 
 	world = new World();
 	camera = new Camera(0, 0, 800, 600);
-	player = { wx: 3, wy: 10, vx: 0, vy: 0, width: 0.8, height: 1.8 };
+	player = { wx: 3, wy: 4, vx: 0, vy: 0, width: 0.8, height: 1.8 };
 	keys = new Set<string>();
 	renderer: Renderer;
 
