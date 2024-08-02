@@ -1,4 +1,4 @@
-import world from '../worlds/world.world?raw';
+import world from '../worlds/fun.world?raw';
 import { Tile } from './Tile';
 
 export class World {
