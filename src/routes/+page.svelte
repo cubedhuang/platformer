@@ -1,0 +1,83 @@
+<script lang="ts">
+	import { Game } from '$lib/Game';
+	import { Tile } from '$lib/Tile';
+	import { onMount } from 'svelte';
+
+	let canvas: HTMLCanvasElement;
+	let game: Game;
+
+	let placing = false;
+	let selectedTile = Tile.Earth;
+
+	onMount(() => {
+		const ctx = canvas.getContext('2d');
+
+		if (!ctx) {
+			throw new Error('2d context not supported');
+		}
+
+		game = new Game(canvas, ctx, canvas.width, canvas.height);
+		game.start();
+
+		return () => {
+			game.destroy();
+		};
+	});
+</script>
+
+<svelte:window
+	on:resize={() => {
+		game.resize();
+	}}
+	on:mousedown={() => {
+		placing = true;
+	}}
+	on:mouseup={() => {
+		placing = false;
+	}}
+	on:mouseleave={() => {
+		placing = false;
+	}}
+	on:blur={() => {
+		placing = false;
+	}}
+	on:mousemove={({ clientX, clientY }) => {
+		if (placing) {
+			const { left, top } = canvas.getBoundingClientRect();
+			const x = clientX - left;
+			const y = clientY - top;
+			game.place(x, y, selectedTile);
+		}
+	}}
+	on:keydown={({ key }) => {
+		game.keys.add(key);
+	}}
+	on:keyup={({ key }) => {
+		game.keys.delete(key);
+	}}
+/>
+
+<div class="container">
+	<div>
+		<canvas width="800" height="600" bind:this={canvas}></canvas>
+		<select bind:value={selectedTile}>
+			<option value={Tile.Empty}>Empty</option>
+			<option value={Tile.Earth}>Earth</option>
+			<option value={Tile.Lava}>Lava</option>
+		</select>
+	</div>
+</div>
+
+<style>
+	.container {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		height: 100vh;
+	}
+
+	canvas {
+		border: 1px solid rgb(36, 45, 62);
+		display: block;
+	}
+</style>
