@@ -133,9 +133,10 @@ export class Game {
 			this.requestId = requestAnimationFrame(ts => this.update(ts));
 			return;
 		}
-		const dt = Math.min((ts - this.prevTime) / 1000, 1 / 30);
+		const actualDt = (ts - this.prevTime) / 1000;
+		const dt = Math.min(actualDt, 1 / 30);
 		dts.update(d => {
-			d.push(dt);
+			d.push(actualDt);
 			if (d.length > 10) d.shift();
 			return d;
 		});
@@ -162,7 +163,7 @@ export class Game {
 		if (this.world.at(worldX, worldY) === tile) return;
 
 		this.world.set(worldX, worldY, tile);
-		this.renderer.invalidate();
+		this.renderer.lazyInvalidate();
 
 		console.log(this.world.toString());
 	}

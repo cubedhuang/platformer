@@ -1,3 +1,5 @@
+import { debounce } from '$lib';
+
 import type { Game } from './Game';
 import { noise } from './noise';
 import { Tile } from './Tile';
@@ -51,6 +53,8 @@ export class Renderer {
 	invalidate() {
 		this.cache.clear();
 	}
+
+	lazyInvalidate = debounce(() => this.invalidate(), 500);
 
 	render() {
 		const game = this.game;
