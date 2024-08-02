@@ -194,7 +194,7 @@ export class Game {
 									((subx === 0 && suby === 0) ||
 										(((subx === 1 && suby === 0) ||
 											(subx === 0 && suby === 1)) &&
-											value > 0.7))) ||
+											value > 0.8))) ||
 								(topRightInside &&
 									((subx === this.SUBTILES - 1 &&
 										suby === 0) ||
@@ -202,7 +202,7 @@ export class Game {
 											suby === 0) ||
 											(subx === this.SUBTILES - 1 &&
 												suby === 1)) &&
-											value > 0.7)));
+											value > 0.8)));
 
 							if (isGreen) {
 								this.ctx.fillStyle = `oklch(${
