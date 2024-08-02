@@ -1,5 +1,6 @@
 import { Camera } from './Camera';
 import { noise } from './noise';
+import { dts } from './stores';
 import { Tile } from './Tile';
 import { World } from './World';
 
@@ -288,6 +289,11 @@ export class Game {
 			return;
 		}
 		const dt = Math.min((ts - this.prevTime) / 1000, 1 / 30);
+		dts.update(d => {
+			d.push(dt);
+			if (d.length > 10) d.shift();
+			return d;
+		});
 		this.prevTime = ts;
 
 		this.physics(dt);

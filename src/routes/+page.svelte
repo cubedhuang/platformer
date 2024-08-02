@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Game } from '$lib/Game';
+	import { dts } from '$lib/stores';
 	import { Tile } from '$lib/Tile';
 	import { onMount } from 'svelte';
 
@@ -65,6 +66,8 @@
 			<option value={Tile.Earth}>Earth</option>
 			<option value={Tile.Lava}>Lava</option>
 		</select>
+		{($dts.reduce((acc, dt) => acc + 1 / dt, 0) / $dts.length).toFixed(2)} FPS
+		{(1 / ($dts.at(-1) ?? 0)).toFixed(2)} FPS
 	</div>
 </div>
 
