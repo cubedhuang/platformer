@@ -7,7 +7,6 @@ import { Tile } from './Tile';
 export class Renderer {
 	readonly SUBTILES = 4;
 
-	private TILE_OVERLAP = 0.25;
 	private PIXEL_RATIO = 1;
 
 	private cache = new Map<string, OffscreenCanvas>();
@@ -22,18 +21,15 @@ export class Renderer {
 		const ratio = window.devicePixelRatio;
 
 		if (ratio === this.PIXEL_RATIO) return;
-
 		this.PIXEL_RATIO = ratio;
-
-		this.cache.clear();
-
-		this.TILE_OVERLAP = 0.25 / ratio;
 
 		game.canvas.width = game.width * ratio;
 		game.canvas.height = game.height * ratio;
 		game.canvas.style.width = `${game.width}px`;
 		game.canvas.style.height = `${game.height}px`;
 		game.ctx.scale(ratio, ratio);
+
+		this.cache.clear();
 	}
 
 	invalidate() {
@@ -186,8 +182,7 @@ export class Renderer {
 					}% 0.038 31.82)`;
 				}
 
-				this.rect(
-					octx,
+				octx.fillRect(
 					x,
 					y,
 					game.TILE_SIZE / this.SUBTILES,
@@ -217,9 +212,7 @@ export class Renderer {
 				);
 
 				octx.fillStyle = `hsl(0 100% ${30 + value * 10}%)`;
-
-				this.rect(
-					octx,
+				octx.fillRect(
 					x,
 					y,
 					game.TILE_SIZE / this.SUBTILES,
@@ -227,20 +220,5 @@ export class Renderer {
 				);
 			}
 		}
-	}
-
-	private rect(
-		ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-		x: number,
-		y: number,
-		width: number,
-		height: number
-	) {
-		ctx.fillRect(
-			x - this.TILE_OVERLAP,
-			y - this.TILE_OVERLAP,
-			width + this.TILE_OVERLAP * 2,
-			height + this.TILE_OVERLAP * 2
-		);
 	}
 }
