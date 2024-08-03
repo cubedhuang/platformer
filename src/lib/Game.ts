@@ -1,10 +1,19 @@
 import { Camera } from './Camera';
 import { Renderer } from './Renderer';
 import { dts } from './stores';
-import { Tile } from './Tile';
+import { COLLIDES, Tile } from './Tile';
 import { World } from './World';
 
 const EPSILON = 0.01;
+
+type Player = {
+	wx: number;
+	wy: number;
+	vx: number;
+	vy: number;
+	width: number;
+	height: number;
+};
 
 export class Game {
 	readonly TILE_SIZE = 32;
@@ -12,10 +21,11 @@ export class Game {
 	private requestId: number | null = null;
 	private prevTime = 0;
 
-	world = new World();
-	camera = new Camera(0, 0, 800, 600);
-	player = { wx: 3, wy: 4, vx: 0, vy: 0, width: 0.8, height: 1.8 };
 	keys = new Set<string>();
+
+	world: World;
+	camera: Camera;
+	player: Player;
 	renderer: Renderer;
 
 	constructor(
@@ -24,6 +34,16 @@ export class Game {
 		public width: number,
 		public height: number
 	) {
+		this.world = new World();
+		this.camera = new Camera(0, 0, 800, 600);
+		this.player = {
+			wx: this.world.playerStart.x,
+			wy: this.world.playerStart.y,
+			vx: 0,
+			vy: 0,
+			width: 0.75,
+			height: 1.75
+		};
 		this.renderer = new Renderer(this);
 		this.resize();
 	}
@@ -107,7 +127,7 @@ export class Game {
 
 		for (let wx = left; wx < right; wx++) {
 			for (let wy = bottom; wy < top; wy++) {
-				if (this.world.at(wx, wy) !== Tile.Empty) {
+				if (COLLIDES.includes(this.world.at(wx, wy))) {
 					return true;
 				}
 			}
@@ -165,7 +185,7 @@ export class Game {
 		this.world.set(worldX, worldY, tile);
 		this.renderer.invalidateNear(worldX, worldY);
 
-		console.log(this.world.toString());
+		console.log(JSON.stringify(this.world.save()));
 	}
 
 	destroy() {

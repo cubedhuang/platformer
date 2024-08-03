@@ -1,5 +1,5 @@
 import type { Game } from './Game';
-import { noise, noises } from './noise';
+import { noises } from './noise';
 import { Tile } from './Tile';
 
 export class Renderer {
@@ -254,12 +254,14 @@ export class Renderer {
 				const x = (subx * game.TILE_SIZE) / this.SUBTILES;
 				const y = (suby * game.TILE_SIZE) / this.SUBTILES;
 
-				const value = noise(
+				const value = noises(
+					[2, 1],
 					wx + subx / this.SUBTILES,
 					wy - suby / this.SUBTILES
 				);
 
-				octx.fillStyle = `hsl(0 100% ${30 + value * 10}%)`;
+				// octx.fillStyle = `hsl(0 100% ${30 + value * 10}%)`;
+				octx.fillStyle = `oklch(${45 + value * 20}% 0.244 34.41)`;
 				octx.fillRect(
 					x,
 					y,
