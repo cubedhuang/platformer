@@ -34,6 +34,10 @@ export class Game {
 	player: Player;
 	renderer: Renderer;
 
+	private readonly COYOTE_TIME = 0.1;
+	private jumpPressed = false;
+	private lastOnGround: number = 0;
+
 	constructor(
 		public canvas: HTMLCanvasElement,
 		public ctx: CanvasRenderingContext2D,
@@ -62,15 +66,51 @@ export class Game {
 		this.requestId = requestAnimationFrame(ts => this.update(ts));
 	}
 
-	physics(dt: number) {
+	place(x: number, y: number, tile: Tile) {
+		x += this.camera.x;
+		y += this.camera.y;
+		const worldX = Math.floor(x / this.TILE_SIZE);
+		const worldY = Math.floor((this.height - y) / this.TILE_SIZE);
+
+		if (this.world.at(worldX, worldY) === tile) return;
+
+		this.world.set(worldX, worldY, tile);
+		this.renderer.invalidateNear(worldX, worldY);
+
+		console.log(JSON.stringify(this.world.save()));
+	}
+
+	destroy() {
+		cancelAnimationFrame(this.requestId!);
+		this.requestId = null;
+	}
+
+	jump() {
+		this.jumpPressed = true;
+	}
+
+	cancelJump() {
+		this.jumpPressed = false;
+	}
+
+	private physics(t: number, dt: number) {
 		const isOnGround = this.isOnGround();
+
+		if (isOnGround) {
+			this.lastOnGround = t;
+		}
+
+		const canJump = t - this.lastOnGround < this.COYOTE_TIME;
+
+		if (canJump && this.jumpPressed) {
+			this.player.vy = 25;
+			this.jumpPressed = false;
+			this.lastOnGround = 0;
+		}
 
 		const ay = -100;
 		let ax = 0;
 
-		if (this.keys.has('ArrowUp') && isOnGround) {
-			this.player.vy = 25;
-		}
 		if (this.keys.has('ArrowLeft')) {
 			ax += -120;
 		}
@@ -83,6 +123,9 @@ export class Game {
 
 		this.player.vx += ax * dt;
 		this.player.vy += ay * dt;
+
+		this.player.vx *= 0.9 ** (dt * 120);
+		this.player.vy *= 0.9 ** (dt * 30);
 
 		const collisionX = this.getCollision(newX, this.player.wy);
 		const collisionY = this.getCollision(this.player.wx, newY);
@@ -125,12 +168,9 @@ export class Game {
 			}
 			this.player.vy = 0;
 		}
-
-		this.player.vx *= 0.9 ** (dt * 120);
-		this.player.vy *= 0.9 ** (dt * 30);
 	}
 
-	getCollision(wx: number, wy: number): Collision {
+	private getCollision(wx: number, wy: number): Collision {
 		const left = Math.floor(wx - this.player.width / 2);
 
 		if (left < 0) return Collision.Blocked;
@@ -162,25 +202,25 @@ export class Game {
 		return collision;
 	}
 
-	isOnGround(): boolean {
+	private isOnGround(): boolean {
 		return (
 			this.getCollision(this.player.wx, this.player.wy - EPSILON * 2) ===
 			Collision.Blocked
 		);
 	}
 
-	die() {
+	private die() {
 		this.player.wx = this.world.playerStart.x;
 		this.player.wy = this.world.playerStart.y;
 		this.player.vx = 0;
 		this.player.vy = 0;
 	}
 
-	render() {
+	private render() {
 		this.renderer.render();
 	}
 
-	update(ts: number) {
+	private update(ts: number) {
 		if (!this.prevTime) {
 			this.prevTime = ts;
 			this.requestId = requestAnimationFrame(ts => this.update(ts));
@@ -195,7 +235,7 @@ export class Game {
 		});
 		this.prevTime = ts;
 
-		this.physics(dt);
+		this.physics(ts / 1000, dt);
 
 		this.camera.follow({
 			x: this.player.wx * this.TILE_SIZE,
@@ -205,24 +245,5 @@ export class Game {
 		this.render();
 
 		this.requestId = requestAnimationFrame(ts => this.update(ts));
-	}
-
-	place(x: number, y: number, tile: Tile) {
-		x += this.camera.x;
-		y += this.camera.y;
-		const worldX = Math.floor(x / this.TILE_SIZE);
-		const worldY = Math.floor((this.height - y) / this.TILE_SIZE);
-
-		if (this.world.at(worldX, worldY) === tile) return;
-
-		this.world.set(worldX, worldY, tile);
-		this.renderer.invalidateNear(worldX, worldY);
-
-		console.log(JSON.stringify(this.world.save()));
-	}
-
-	destroy() {
-		cancelAnimationFrame(this.requestId!);
-		this.requestId = null;
 	}
 }

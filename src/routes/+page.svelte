@@ -52,11 +52,19 @@
 			game.place(x, y, selectedTile);
 		}
 	}}
-	on:keydown={({ key }) => {
-		game.keys.add(key);
+	on:keydown={e => {
+		game.keys.add(e.key);
+
+		if (e.key === 'ArrowUp' && !e.repeat) {
+			game.jump();
+		}
 	}}
 	on:keyup={({ key }) => {
 		game.keys.delete(key);
+
+		if (key === 'ArrowUp') {
+			game.cancelJump();
+		}
 	}}
 />
 
