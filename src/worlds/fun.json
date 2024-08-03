@@ -2,11 +2,11 @@
 	"player": { "x": 3, "y": 3 },
 	"layers": {
 		"foreground": [
-			{ "tile": 1, "x": -1, "y": 0, "width": 24, "height": 2 },
+			{ "tile": 1, "x": -1, "y": 0, "width": 12, "height": 2 },
+			{ "tile": 1, "x": 13, "y": 0, "width": 10, "height": 3 },
 			{ "tile": 2, "x": 23, "y": 0, "width": 3, "height": 2 },
 			{ "tile": 1, "x": 26, "y": 0, "width": 89, "height": 2 },
 			{ "tile": 1, "x": 8, "y": 2, "width": 3, "height": 1 },
-			{ "tile": 1, "x": 13, "y": 2, "width": 10, "height": 1 },
 			{ "tile": 1, "x": 14, "y": 3, "width": 9, "height": 1 },
 			{ "tile": 1, "x": 15, "y": 4, "width": 8, "height": 1 },
 			{ "tile": 1, "x": 16, "y": 5, "width": 8, "height": 1 },
