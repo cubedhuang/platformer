@@ -15,6 +15,12 @@ type Player = {
 	height: number;
 };
 
+enum Collision {
+	None,
+	Blocked,
+	Death
+}
+
 export class Game {
 	readonly TILE_SIZE = 32;
 
@@ -78,7 +84,15 @@ export class Game {
 		this.player.vx += ax * dt;
 		this.player.vy += ay * dt;
 
-		if (!this.checkCollision(newX, this.player.wy)) {
+		const collisionX = this.getCollision(newX, this.player.wy);
+		const collisionY = this.getCollision(this.player.wx, newY);
+
+		if (collisionX === Collision.Death || collisionY === Collision.Death) {
+			this.die();
+			return;
+		}
+
+		if (collisionX === Collision.None) {
 			this.player.wx = newX;
 		} else {
 			if (this.player.vx > 0) {
@@ -95,7 +109,7 @@ export class Game {
 			this.player.vx = 0;
 		}
 
-		if (!this.checkCollision(this.player.wx, newY)) {
+		if (collisionY === Collision.None) {
 			this.player.wy = newY;
 		} else {
 			if (this.player.vy < 0) {
@@ -116,31 +130,50 @@ export class Game {
 		this.player.vy *= 0.9 ** (dt * 30);
 	}
 
-	checkCollision(x: number, y: number): boolean {
-		const left = Math.floor(x - this.player.width / 2);
+	getCollision(wx: number, wy: number): Collision {
+		const left = Math.floor(wx - this.player.width / 2);
 
-		if (left < 0) return true;
+		if (left < 0) return Collision.Blocked;
 
-		const right = Math.ceil(x + this.player.width / 2);
-		const bottom = Math.floor(y - this.player.height / 2);
-		const top = Math.ceil(y + this.player.height / 2);
+		const playerBottom = wy - this.player.height / 2;
+
+		const right = Math.ceil(wx + this.player.width / 2);
+		const bottom = Math.floor(playerBottom);
+		const top = Math.ceil(wy + this.player.height / 2);
+
+		let collision = Collision.None;
 
 		for (let wx = left; wx < right; wx++) {
 			for (let wy = bottom; wy < top; wy++) {
-				if (COLLIDES.includes(this.world.at(wx, wy))) {
-					return true;
+				const tile = this.world.at(wx, wy);
+
+				if (COLLIDES.includes(tile)) {
+					if (collision === Collision.None)
+						collision = Collision.Blocked;
+				} else if (tile === Tile.Lava) {
+					// lava is shorter than a full tile
+					if (playerBottom < wy + 0.75) {
+						collision = Collision.Death;
+					}
 				}
 			}
 		}
 
-		return false;
+		return collision;
 	}
 
 	isOnGround(): boolean {
-		return this.checkCollision(
-			this.player.wx,
-			this.player.wy - EPSILON * 2
+		return (
+			this.getCollision(this.player.wx, this.player.wy - EPSILON * 2) ===
+			Collision.Blocked
 		);
+	}
+
+	die() {
+		this.player.wx = this.world.playerStart.x;
+		this.player.wy = this.world.playerStart.y;
+		this.player.vx = 0;
+		this.player.vy = 0;
 	}
 
 	render() {
