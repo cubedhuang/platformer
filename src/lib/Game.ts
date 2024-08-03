@@ -168,6 +168,10 @@ export class Game {
 			}
 			this.player.vy = 0;
 		}
+
+		if (this.player.wy + this.player.height / 2 < -1) {
+			this.die();
+		}
 	}
 
 	private getCollision(wx: number, wy: number): Collision {
