@@ -54,7 +54,11 @@
 			{ "tile": 1, "x": 78, "y": 29, "width": 14, "height": 1 },
 			{ "tile": 1, "x": 84, "y": 30, "width": 9, "height": 2 },
 			{ "tile": 1, "x": 91, "y": 32, "width": 3, "height": 3 },
-			{ "tile": 1, "x": 89, "y": 33, "width": 5, "height": 1 }
+			{ "tile": 1, "x": 89, "y": 33, "width": 5, "height": 1 },
+			{ "tile": 1, "x": 99, "y": 32, "width": 5, "height": 3 },
+			{ "tile": 1, "x": 97, "y": 33, "width": 8, "height": 2 },
+			{ "tile": 1, "x": 109, "y": 33, "width": 3, "height": 2 },
+			{ "tile": 1, "x": 117, "y": 33, "width": 2, "height": 2 }
 		]
 	}
 }
