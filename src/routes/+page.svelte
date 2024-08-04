@@ -8,8 +8,8 @@
 	let game: Game;
 
 	let placing = false;
-	let selectedTile = Tile.Earth;
-	let layerName: 'foreground' | 'midground' = 'midground';
+	let selectedTile = Tile.Rock;
+	let layerName: 'foreground' | 'midground' = 'foreground';
 
 	onMount(() => {
 		const ctx = canvas.getContext('2d', {
@@ -77,6 +77,7 @@
 			<option value={Tile.Empty}>Empty</option>
 			<option value={Tile.Earth}>Earth</option>
 			<option value={Tile.Lava}>Lava</option>
+			<option value={Tile.Rock}>Rock</option>
 		</select>
 
 		<select bind:value={layerName}>

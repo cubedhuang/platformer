@@ -85,6 +85,8 @@ export class Renderer {
 	}
 
 	render() {
+		console.log(this.cache.size);
+
 		const game = this.game;
 
 		game.ctx.fillStyle = 'hsl(205 80% 40%)';
@@ -106,6 +108,8 @@ export class Renderer {
 			tileOffsetX !== this.lastTileOffset.x ||
 			tileOffsetY !== this.lastTileOffset.y
 		) {
+			console.log('redraw');
+
 			this.fctx.clearRect(
 				0,
 				0,
@@ -203,6 +207,9 @@ export class Renderer {
 				break;
 			case Tile.Lava:
 				this.renderLavaTile(layer, octx, wx, wy);
+				break;
+			case Tile.Rock:
+				this.renderRockTile(layer, octx, wx, wy);
 				break;
 		}
 
@@ -316,8 +323,69 @@ export class Renderer {
 					wy - suby / this.SUBTILES
 				);
 
-				// octx.fillStyle = `hsl(0 100% ${30 + value * 10}%)`;
 				octx.fillStyle = `oklch(${45 + value * 20}% 0.244 34.41)`;
+				octx.fillRect(
+					x,
+					y,
+					game.TILE_SIZE / this.SUBTILES,
+					game.TILE_SIZE / this.SUBTILES
+				);
+			}
+		}
+	}
+
+	private renderRockTile(
+		layer: Layer,
+		octx: OffscreenCanvasRenderingContext2D,
+		wx: number,
+		wy: number
+	) {
+		const game = this.game;
+
+		const topLeftCorner =
+			layer.at(wx - 1, wy + 1) === Tile.Empty &&
+			layer.at(wx - 1, wy) === Tile.Empty &&
+			layer.at(wx, wy + 1) === Tile.Empty;
+		const topRightCorner =
+			layer.at(wx + 1, wy + 1) === Tile.Empty &&
+			layer.at(wx + 1, wy) === Tile.Empty &&
+			layer.at(wx, wy + 1) === Tile.Empty;
+		const bottomLeftCorner =
+			layer.at(wx - 1, wy - 1) === Tile.Empty &&
+			layer.at(wx - 1, wy) === Tile.Empty &&
+			layer.at(wx, wy - 1) === Tile.Empty;
+		const bottomRightCorner =
+			layer.at(wx + 1, wy - 1) === Tile.Empty &&
+			layer.at(wx + 1, wy) === Tile.Empty &&
+			layer.at(wx, wy - 1) === Tile.Empty;
+
+		for (let subx = 0; subx < this.SUBTILES; subx++) {
+			for (let suby = 0; suby < this.SUBTILES; suby++) {
+				if (
+					(topLeftCorner && subx === 0 && suby === 0) ||
+					(topRightCorner &&
+						subx === this.SUBTILES - 1 &&
+						suby === 0) ||
+					(bottomLeftCorner &&
+						subx === 0 &&
+						suby === this.SUBTILES - 1) ||
+					(bottomRightCorner &&
+						subx === this.SUBTILES - 1 &&
+						suby === this.SUBTILES - 1)
+				) {
+					continue;
+				}
+
+				const x = (subx * game.TILE_SIZE) / this.SUBTILES;
+				const y = (suby * game.TILE_SIZE) / this.SUBTILES;
+
+				const value = noises(
+					[2, 0.3],
+					wx + subx / this.SUBTILES,
+					wy - suby / this.SUBTILES
+				);
+
+				octx.fillStyle = `oklch(${30 + value * 20}% 0.015 255.04)`;
 				octx.fillRect(
 					x,
 					y,
