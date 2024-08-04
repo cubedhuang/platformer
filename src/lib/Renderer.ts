@@ -85,8 +85,6 @@ export class Renderer {
 	}
 
 	render() {
-		console.log(this.cache.size);
-
 		const game = this.game;
 
 		game.ctx.fillStyle = 'hsl(205 80% 40%)';
@@ -108,8 +106,6 @@ export class Renderer {
 			tileOffsetX !== this.lastTileOffset.x ||
 			tileOffsetY !== this.lastTileOffset.y
 		) {
-			console.log('redraw');
-
 			this.fctx.clearRect(
 				0,
 				0,
