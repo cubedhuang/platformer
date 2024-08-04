@@ -128,9 +128,8 @@ export class Game {
 		this.player.vy *= 0.9 ** (dt * 30);
 
 		const collisionX = this.getCollision(newX, this.player.wy);
-		const collisionY = this.getCollision(this.player.wx, newY);
 
-		if (collisionX === Collision.Death || collisionY === Collision.Death) {
+		if (collisionX === Collision.Death) {
 			this.die();
 			return;
 		}
@@ -150,6 +149,13 @@ export class Game {
 					EPSILON;
 			}
 			this.player.vx = 0;
+		}
+
+		const collisionY = this.getCollision(this.player.wx, newY);
+
+		if (collisionY === Collision.Death) {
+			this.die();
+			return;
 		}
 
 		if (collisionY === Collision.None) {
@@ -243,6 +249,7 @@ export class Game {
 		this.prevTime = ts;
 
 		this.physics(ts / 1000, dt);
+		console.log(this.player.wx, this.player.wy);
 
 		this.camera.follow({
 			x: this.player.wx * this.TILE_SIZE,
