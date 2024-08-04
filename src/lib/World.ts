@@ -115,16 +115,14 @@ export class Layer {
 			}
 
 			// Expand height
-			let canExpandHeight = true;
-			while (canExpandHeight) {
+			outer: while (true) {
 				for (let dx = 0; dx < width; dx++) {
 					if (this.storage.get(x + dx, y + height) !== tile) {
-						canExpandHeight = false;
-						break;
+						break outer;
 					}
 				}
 
-				if (canExpandHeight) height++;
+				height++;
 			}
 
 			// Mark all tiles in this area as visited
