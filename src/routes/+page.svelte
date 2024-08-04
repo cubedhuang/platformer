@@ -9,6 +9,7 @@
 
 	let placing = false;
 	let selectedTile = Tile.Earth;
+	let layerName: 'foreground' | 'midground' = 'midground';
 
 	onMount(() => {
 		const ctx = canvas.getContext('2d', {
@@ -49,7 +50,7 @@
 			const { left, top } = canvas.getBoundingClientRect();
 			const x = clientX - left;
 			const y = clientY - top;
-			game.place(x, y, selectedTile);
+			game.place(x, y, selectedTile, layerName);
 		}
 	}}
 	on:keydown={e => {
@@ -71,11 +72,18 @@
 <div class="container">
 	<div>
 		<canvas width="800" height="600" bind:this={canvas}></canvas>
+
 		<select bind:value={selectedTile}>
 			<option value={Tile.Empty}>Empty</option>
 			<option value={Tile.Earth}>Earth</option>
 			<option value={Tile.Lava}>Lava</option>
 		</select>
+
+		<select bind:value={layerName}>
+			<option value="foreground">Foreground</option>
+			<option value="midground">Midground</option>
+		</select>
+
 		{($dts.reduce((acc, dt) => acc + 1 / dt, 0) / $dts.length).toFixed(2)} FPS
 		{(1 / ($dts.at(-1) ?? 0)).toFixed(2)} FPS
 	</div>

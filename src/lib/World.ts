@@ -9,11 +9,15 @@ type CompressedTile = {
 	height: number;
 };
 
-type Layer = CompressedTile[];
+type SavedLayer = CompressedTile[];
 
 type SavedWorld = {
 	player: { x: number; y: number };
-	layers: { foreground: Layer };
+	layers: {
+		foreground: SavedLayer;
+		midground: SavedLayer;
+		background: SavedLayer;
+	};
 };
 
 class ChunkedStorage {
@@ -74,15 +78,11 @@ class ChunkedStorage {
 	}
 }
 
-export class World {
-	readonly playerStart: { x: number; y: number };
-	private tiles: ChunkedStorage = new ChunkedStorage();
+export class Layer {
+	private storage: ChunkedStorage = new ChunkedStorage();
 
-	constructor() {
-		this.playerStart = savedWorld.player;
-
-		for (const { tile, x, y, width, height } of savedWorld.layers
-			.foreground) {
+	constructor(savedLayer: SavedLayer) {
+		for (const { tile, x, y, width, height } of savedLayer) {
 			for (let dy = 0; dy < height; dy++) {
 				for (let dx = 0; dx < width; dx++) {
 					this.set(x + dx, y + dy, tile);
@@ -91,41 +91,26 @@ export class World {
 		}
 	}
 
-	getPlayer() {
-		return this.playerStart;
+	at(x: number, y: number): Tile {
+		return this.storage.get(x, y);
 	}
 
-	at(wx: number, wy: number): Tile {
-		return this.tiles.get(wx, wy);
+	set(x: number, y: number, tile: Tile): void {
+		this.storage.set(x, y, tile);
 	}
 
-	set(wx: number, wy: number, tile: Tile): void {
-		this.tiles.set(wx, wy, tile);
-	}
-
-	save(): SavedWorld {
-		const compressedForeground = this.compressLayer();
-
-		return {
-			player: this.playerStart,
-			layers: {
-				foreground: compressedForeground
-			}
-		};
-	}
-
-	private compressLayer(): Layer {
-		const compressed: Layer = [];
+	save(): SavedLayer {
+		const compressed: SavedLayer = [];
 		const visited = new Set<string>();
 
-		for (const [x, y, tile] of this.tiles.entries()) {
+		for (const [x, y, tile] of this.storage.entries()) {
 			if (visited.has(`${x},${y}`)) continue;
 
 			let width = 1;
 			let height = 1;
 
 			// Expand width
-			while (this.tiles.get(x + width, y) === tile) {
+			while (this.storage.get(x + width, y) === tile) {
 				width++;
 			}
 
@@ -133,7 +118,7 @@ export class World {
 			let canExpandHeight = true;
 			while (canExpandHeight) {
 				for (let dx = 0; dx < width; dx++) {
-					if (this.tiles.get(x + dx, y + height) !== tile) {
+					if (this.storage.get(x + dx, y + height) !== tile) {
 						canExpandHeight = false;
 						break;
 					}
@@ -153,5 +138,34 @@ export class World {
 		}
 
 		return compressed;
+	}
+}
+
+export class World {
+	readonly playerStart: { x: number; y: number };
+	readonly foreground: Layer;
+	readonly midground: Layer;
+	readonly background: Layer;
+
+	constructor() {
+		this.playerStart = savedWorld.player;
+		this.foreground = new Layer(savedWorld.layers.foreground);
+		this.midground = new Layer(savedWorld.layers.midground);
+		this.background = new Layer(savedWorld.layers.background);
+	}
+
+	getPlayer() {
+		return this.playerStart;
+	}
+
+	save(): SavedWorld {
+		return {
+			player: this.playerStart,
+			layers: {
+				foreground: this.foreground.save(),
+				midground: this.midground.save(),
+				background: this.background.save()
+			}
+		};
 	}
 }

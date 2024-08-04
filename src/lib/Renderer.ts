@@ -1,6 +1,7 @@
 import type { Game } from './Game';
 import { noises } from './noise';
 import { Tile } from './Tile';
+import type { Layer } from './World';
 
 export class Renderer {
 	readonly SUBTILES = 4;
@@ -11,6 +12,8 @@ export class Renderer {
 
 	private foreground: OffscreenCanvas;
 	private fctx: OffscreenCanvasRenderingContext2D;
+	private midground: OffscreenCanvas;
+	private mctx: OffscreenCanvasRenderingContext2D;
 
 	constructor(private game: Game) {
 		this.foreground = new OffscreenCanvas(
@@ -18,6 +21,14 @@ export class Renderer {
 			(game.height + game.TILE_SIZE) * this.PIXEL_RATIO
 		);
 		this.fctx = this.foreground.getContext('2d', {
+			desynchronized: true
+		})!;
+
+		this.midground = new OffscreenCanvas(
+			(game.width + game.TILE_SIZE) * this.PIXEL_RATIO,
+			(game.height + game.TILE_SIZE) * this.PIXEL_RATIO
+		);
+		this.mctx = this.midground.getContext('2d', {
 			desynchronized: true
 		})!;
 
@@ -42,6 +53,10 @@ export class Renderer {
 		this.foreground.height = (game.height + game.TILE_SIZE) * ratio;
 		this.fctx.scale(ratio, ratio);
 
+		this.midground.width = (game.width + game.TILE_SIZE) * ratio;
+		this.midground.height = (game.height + game.TILE_SIZE) * ratio;
+		this.mctx.scale(ratio, ratio);
+
 		this.cache.clear();
 	}
 
@@ -52,7 +67,8 @@ export class Renderer {
 	invalidateNear(wx: number, wy: number) {
 		for (let dx = -1; dx <= 1; dx++) {
 			for (let dy = -1; dy <= 1; dy++) {
-				this.cache.delete(`${wx + dx},${wy + dy}`);
+				this.cache.delete(`fg_${wx + dx},${wy + dy}`);
+				this.cache.delete(`mg_${wx + dx},${wy + dy}`);
 			}
 		}
 	}
@@ -80,34 +96,42 @@ export class Renderer {
 		const tileOffsetY =
 			Math.floor(game.camera.y / game.TILE_SIZE) * game.TILE_SIZE;
 
-		for (let wx = startX; wx < endX; wx++) {
-			for (let wy = startY; wy < endY; wy++) {
-				const tile = game.world.at(wx, wy);
-				if (tile === Tile.Empty) continue;
+		const layers = [game.world.midground, game.world.foreground];
 
-				const x = wx * game.TILE_SIZE - tileOffsetX;
-				const y =
-					game.height -
-					wy * game.TILE_SIZE -
-					game.TILE_SIZE -
-					tileOffsetY;
+		for (const layer of layers) {
+			const isForeground = layer === game.world.foreground;
 
-				const key = `${wx},${wy}`;
+			for (let wx = startX; wx < endX; wx++) {
+				for (let wy = startY; wy < endY; wy++) {
+					const tile = layer.at(wx, wy);
+					if (tile === Tile.Empty) continue;
 
-				let ocanvas = this.cache.get(key);
+					const x = wx * game.TILE_SIZE - tileOffsetX;
+					const y =
+						game.height -
+						wy * game.TILE_SIZE -
+						game.TILE_SIZE -
+						tileOffsetY;
 
-				if (!ocanvas) {
-					ocanvas = this.renderTile(tile, wx, wy);
-					this.cache.set(key, ocanvas);
+					const key = isForeground
+						? `fg_${wx},${wy}`
+						: `mg_${wx},${wy}`;
+
+					let ocanvas = this.cache.get(key);
+
+					if (!ocanvas) {
+						ocanvas = this.renderTile(layer, tile, wx, wy);
+						this.cache.set(key, ocanvas);
+					}
+
+					this.fctx.drawImage(
+						ocanvas,
+						x,
+						y,
+						game.TILE_SIZE,
+						game.TILE_SIZE
+					);
 				}
-
-				this.fctx.drawImage(
-					ocanvas,
-					x,
-					y,
-					game.TILE_SIZE,
-					game.TILE_SIZE
-				);
 			}
 		}
 
@@ -136,7 +160,7 @@ export class Renderer {
 		);
 	}
 
-	private renderTile(tile: Tile, wx: number, wy: number) {
+	private renderTile(layer: Layer, tile: Tile, wx: number, wy: number) {
 		const ocanvas = new OffscreenCanvas(
 			this.game.TILE_SIZE * this.PIXEL_RATIO,
 			this.game.TILE_SIZE * this.PIXEL_RATIO
@@ -148,10 +172,10 @@ export class Renderer {
 
 		switch (tile) {
 			case Tile.Earth:
-				this.renderEarthTile(octx, wx, wy);
+				this.renderEarthTile(layer, octx, wx, wy);
 				break;
 			case Tile.Lava:
-				this.renderLavaTile(octx, wx, wy);
+				this.renderLavaTile(layer, octx, wx, wy);
 				break;
 		}
 
@@ -159,27 +183,31 @@ export class Renderer {
 	}
 
 	private renderEarthTile(
+		layer: Layer,
 		octx: OffscreenCanvasRenderingContext2D,
 		wx: number,
 		wy: number
 	) {
 		const game = this.game;
 
+		const greenLightnessShift = layer === game.world.foreground ? 0 : -15;
+		const brownLightnessShift = layer === game.world.foreground ? 0 : -10;
+
 		const topLeftCorner =
-			game.world.at(wx - 1, wy + 1) === Tile.Empty &&
-			game.world.at(wx - 1, wy) === Tile.Empty &&
-			game.world.at(wx, wy + 1) === Tile.Empty;
+			layer.at(wx - 1, wy + 1) === Tile.Empty &&
+			layer.at(wx - 1, wy) === Tile.Empty &&
+			layer.at(wx, wy + 1) === Tile.Empty;
 		const topRightCorner =
-			game.world.at(wx + 1, wy + 1) === Tile.Empty &&
-			game.world.at(wx + 1, wy) === Tile.Empty &&
-			game.world.at(wx, wy + 1) === Tile.Empty;
-		const top = game.world.at(wx, wy + 1) === Tile.Empty;
-		const left = game.world.at(wx - 1, wy) === Tile.Empty;
-		const right = game.world.at(wx + 1, wy) === Tile.Empty;
+			layer.at(wx + 1, wy + 1) === Tile.Empty &&
+			layer.at(wx + 1, wy) === Tile.Empty &&
+			layer.at(wx, wy + 1) === Tile.Empty;
+		const top = layer.at(wx, wy + 1) === Tile.Empty;
+		const left = layer.at(wx - 1, wy) === Tile.Empty;
+		const right = layer.at(wx + 1, wy) === Tile.Empty;
 		const topLeftInside =
-			!top && !left && game.world.at(wx - 1, wy + 1) === Tile.Empty;
+			!top && !left && layer.at(wx - 1, wy + 1) === Tile.Empty;
 		const topRightInside =
-			!top && !right && game.world.at(wx + 1, wy + 1) === Tile.Empty;
+			!top && !right && layer.at(wx + 1, wy + 1) === Tile.Empty;
 
 		for (let subx = 0; subx < this.SUBTILES; subx++) {
 			for (let suby = 0; suby < this.SUBTILES; suby++) {
@@ -222,11 +250,11 @@ export class Renderer {
 
 				if (isGreen) {
 					octx.fillStyle = `oklch(${
-						55 + (value - 0.5) * 10
+						greenLightnessShift + 55 + (value - 0.5) * 10
 					}% 0.2467 145.39)`;
 				} else {
 					octx.fillStyle = `oklch(${
-						30.15 + (value - 0.5) * 10
+						brownLightnessShift + 30 + (value - 0.5) * 10
 					}% 0.038 31.82)`;
 				}
 
@@ -241,13 +269,14 @@ export class Renderer {
 	}
 
 	private renderLavaTile(
+		layer: Layer,
 		octx: OffscreenCanvasRenderingContext2D,
 		wx: number,
 		wy: number
 	) {
 		const game = this.game;
 
-		const top = game.world.at(wx, wy + 1) === Tile.Empty;
+		const top = layer.at(wx, wy + 1) === Tile.Empty;
 
 		for (let subx = 0; subx < this.SUBTILES; subx++) {
 			for (let suby = top ? 1 : 0; suby < this.SUBTILES; suby++) {

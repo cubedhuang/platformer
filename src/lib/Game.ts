@@ -66,15 +66,22 @@ export class Game {
 		this.requestId = requestAnimationFrame(ts => this.update(ts));
 	}
 
-	place(x: number, y: number, tile: Tile) {
+	place(
+		x: number,
+		y: number,
+		tile: Tile,
+		layerName: 'foreground' | 'midground'
+	) {
 		x += this.camera.x;
 		y += this.camera.y;
 		const worldX = Math.floor(x / this.TILE_SIZE);
 		const worldY = Math.floor((this.height - y) / this.TILE_SIZE);
 
-		if (this.world.at(worldX, worldY) === tile) return;
+		const layer = this.world[layerName];
 
-		this.world.set(worldX, worldY, tile);
+		if (layer.at(worldX, worldY) === tile) return;
+
+		layer.set(worldX, worldY, tile);
 		this.renderer.invalidateNear(worldX, worldY);
 
 		console.log(JSON.stringify(this.world.save()));
@@ -195,7 +202,7 @@ export class Game {
 
 		for (let wx = left; wx < right; wx++) {
 			for (let wy = bottom; wy < top; wy++) {
-				const tile = this.world.at(wx, wy);
+				const tile = this.world.foreground.at(wx, wy);
 
 				if (COLLIDES.includes(tile)) {
 					if (collision === Collision.None)
