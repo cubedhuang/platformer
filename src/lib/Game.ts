@@ -45,7 +45,7 @@ export class Game {
 		public height: number
 	) {
 		this.world = new World();
-		this.camera = new Camera(0, 0, 800, 600);
+		this.camera = new Camera(0, 0, width, height);
 		this.player = {
 			wx: this.world.playerStart.x,
 			wy: this.world.playerStart.y,
