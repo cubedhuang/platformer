@@ -4,7 +4,7 @@ import { dts } from './stores';
 import { COLLIDES, Tile } from './Tile';
 import { World } from './World';
 
-const EPSILON = 0.01;
+const EPSILON = Number.EPSILON * 2 ** 20;
 
 type Player = {
 	wx: number;
@@ -230,13 +230,16 @@ export class Game {
 			this.requestId = requestAnimationFrame(ts => this.update(ts));
 			return;
 		}
+
 		const actualDt = (ts - this.prevTime) / 1000;
 		const dt = Math.min(actualDt, 1 / 30);
+
 		dts.update(d => {
 			d.push(actualDt);
 			if (d.length > 10) d.shift();
 			return d;
 		});
+
 		this.prevTime = ts;
 
 		this.physics(ts / 1000, dt);
