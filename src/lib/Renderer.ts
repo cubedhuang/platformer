@@ -9,9 +9,17 @@ export class Renderer {
 	private PIXEL_RATIO = 1;
 
 	private cache = new Map<string, OffscreenCanvas>();
+	private lastTileOffset: {
+		x: number | null;
+		y: number | null;
+	} = {
+		x: null,
+		y: null
+	};
 
 	private foreground: OffscreenCanvas;
 	private fctx: OffscreenCanvasRenderingContext2D;
+
 	private midground: OffscreenCanvas;
 	private mctx: OffscreenCanvasRenderingContext2D;
 
@@ -62,6 +70,7 @@ export class Renderer {
 
 	invalidate() {
 		this.cache.clear();
+		this.lastTileOffset = { x: null, y: null };
 	}
 
 	invalidateNear(wx: number, wy: number) {
@@ -71,6 +80,8 @@ export class Renderer {
 				this.cache.delete(`mg_${wx + dx},${wy + dy}`);
 			}
 		}
+
+		this.lastTileOffset = { x: null, y: null };
 	}
 
 	render() {
@@ -79,61 +90,77 @@ export class Renderer {
 		game.ctx.fillStyle = 'hsl(205 80% 40%)';
 		game.ctx.fillRect(0, 0, game.width, game.height);
 
-		this.fctx.clearRect(
-			0,
-			0,
-			this.foreground.width,
-			this.foreground.height
-		);
-
 		const startX = Math.floor(game.camera.x / game.TILE_SIZE);
 		const startY = Math.floor(-game.camera.y / game.TILE_SIZE);
-		const endX = Math.ceil((game.camera.x + game.width) / game.TILE_SIZE);
-		const endY = Math.ceil((game.height - game.camera.y) / game.TILE_SIZE);
+		const endX =
+			Math.ceil((game.camera.x + game.width) / game.TILE_SIZE) + 1;
+		const endY =
+			Math.ceil((game.height - game.camera.y) / game.TILE_SIZE) + 1;
 
 		const tileOffsetX =
 			Math.floor(game.camera.x / game.TILE_SIZE) * game.TILE_SIZE;
 		const tileOffsetY =
 			Math.floor(game.camera.y / game.TILE_SIZE) * game.TILE_SIZE;
 
-		const layers = [game.world.midground, game.world.foreground];
+		if (
+			tileOffsetX !== this.lastTileOffset.x ||
+			tileOffsetY !== this.lastTileOffset.y
+		) {
+			this.fctx.clearRect(
+				0,
+				0,
+				this.foreground.width,
+				this.foreground.height
+			);
+			this.mctx.clearRect(
+				0,
+				0,
+				this.midground.width,
+				this.midground.height
+			);
 
-		for (const layer of layers) {
-			const isForeground = layer === game.world.foreground;
+			const layers = [game.world.midground, game.world.foreground];
 
-			for (let wx = startX; wx < endX; wx++) {
-				for (let wy = startY; wy < endY; wy++) {
-					const tile = layer.at(wx, wy);
-					if (tile === Tile.Empty) continue;
+			for (const layer of layers) {
+				const isForeground = layer === game.world.foreground;
 
-					const x = wx * game.TILE_SIZE - tileOffsetX;
-					const y =
-						game.height -
-						wy * game.TILE_SIZE -
-						game.TILE_SIZE -
-						tileOffsetY;
+				for (let wx = startX; wx < endX; wx++) {
+					for (let wy = startY; wy < endY; wy++) {
+						const tile = layer.at(wx, wy);
+						if (tile === Tile.Empty) continue;
 
-					const key = isForeground
-						? `fg_${wx},${wy}`
-						: `mg_${wx},${wy}`;
+						const x = wx * game.TILE_SIZE - tileOffsetX;
+						const y =
+							game.height -
+							wy * game.TILE_SIZE -
+							game.TILE_SIZE -
+							tileOffsetY;
 
-					let ocanvas = this.cache.get(key);
+						const key = isForeground
+							? `fg_${wx},${wy}`
+							: `mg_${wx},${wy}`;
 
-					if (!ocanvas) {
-						ocanvas = this.renderTile(layer, tile, wx, wy);
-						this.cache.set(key, ocanvas);
+						let ocanvas = this.cache.get(key);
+
+						if (!ocanvas) {
+							ocanvas = this.renderTile(layer, tile, wx, wy);
+							this.cache.set(key, ocanvas);
+						}
+
+						this.fctx.drawImage(
+							ocanvas,
+							x,
+							y,
+							game.TILE_SIZE,
+							game.TILE_SIZE
+						);
 					}
-
-					this.fctx.drawImage(
-						ocanvas,
-						x,
-						y,
-						game.TILE_SIZE,
-						game.TILE_SIZE
-					);
 				}
 			}
 		}
+
+		this.lastTileOffset.x = tileOffsetX;
+		this.lastTileOffset.y = tileOffsetY;
 
 		game.ctx.drawImage(
 			this.foreground,
