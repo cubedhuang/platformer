@@ -46,7 +46,7 @@ export class Renderer {
 	resize() {
 		const game = this.game;
 
-		const ratio = window.devicePixelRatio;
+		const ratio = Math.ceil(window.devicePixelRatio);
 
 		if (ratio === this.PIXEL_RATIO) return;
 		this.PIXEL_RATIO = ratio;
@@ -65,7 +65,7 @@ export class Renderer {
 		this.midground.height = (game.height + game.TILE_SIZE) * ratio;
 		this.mctx.scale(ratio, ratio);
 
-		this.cache.clear();
+		this.invalidate();
 	}
 
 	invalidate() {
@@ -109,14 +109,14 @@ export class Renderer {
 			this.fctx.clearRect(
 				0,
 				0,
-				this.foreground.width,
-				this.foreground.height
+				this.foreground.width / this.PIXEL_RATIO,
+				this.foreground.height / this.PIXEL_RATIO
 			);
 			this.mctx.clearRect(
 				0,
 				0,
-				this.midground.width,
-				this.midground.height
+				this.midground.width / this.PIXEL_RATIO,
+				this.midground.height / this.PIXEL_RATIO
 			);
 
 			const layers = [game.world.midground, game.world.foreground];
