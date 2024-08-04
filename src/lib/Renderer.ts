@@ -170,7 +170,7 @@ export class Renderer {
 			this.foreground.height / this.PIXEL_RATIO
 		);
 
-		game.ctx.fillStyle = 'blue';
+		game.ctx.fillStyle = 'skyblue';
 
 		const x = game.player.wx * game.TILE_SIZE;
 		const y =
@@ -314,12 +314,12 @@ export class Renderer {
 				const y = (suby * game.TILE_SIZE) / this.SUBTILES;
 
 				const value = noises(
-					[2, 1],
+					[2, 1, 0.3],
 					wx + subx / this.SUBTILES,
 					wy - suby / this.SUBTILES
 				);
 
-				octx.fillStyle = `oklch(${45 + value * 20}% 0.244 34.41)`;
+				octx.fillStyle = `oklch(${35 + value * 40}% 0.244 34.41)`;
 				octx.fillRect(
 					x,
 					y,
