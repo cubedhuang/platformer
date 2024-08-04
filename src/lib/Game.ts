@@ -249,8 +249,6 @@ export class Game {
 		this.prevTime = ts;
 
 		this.physics(ts / 1000, dt);
-		console.log(this.player.wx, this.player.wy);
-
 		this.camera.follow({
 			x: this.player.wx * this.TILE_SIZE,
 			y: -this.player.wy * this.TILE_SIZE + this.height
