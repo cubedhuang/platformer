@@ -22,7 +22,7 @@ enum Collision {
 }
 
 export class Game {
-	readonly TILE_SIZE = 32;
+	readonly TILE_SIZE = 28;
 
 	private requestId: number | null = null;
 	private prevTime = 0;
