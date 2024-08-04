@@ -110,7 +110,7 @@ export class Game {
 		const canJump = t - this.lastOnGround < this.COYOTE_TIME;
 
 		if (canJump && this.jumpPressed) {
-			this.player.vy = 25;
+			this.player.vy = 28;
 			this.jumpPressed = false;
 			this.lastOnGround = 0;
 		}
